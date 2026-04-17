@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>፶ መጽሐፍ ቅዱሳዊ ጥያቄዎች - Enwok</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark-bg: #0a0a0a;
+            --card-bg: #151515;
+            --text: #e0e0e0;
+            --success: #2ecc71;
+            --error: #e74c3c;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text);
+            font-family: 'Noto Sans Ethiopic', sans-serif;
+            margin: 0; padding: 20px;
+        }
+
+        .quiz-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #333;
+        }
+
+        .header { text-align: center; border-bottom: 2px solid var(--gold); margin-bottom: 25px; padding-bottom: 10px; }
+        .header h1 { color: var(--gold); margin: 0; }
+
+        .question-text { font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; display: block; color: var(--gold); line-height: 1.6; }
+
+        .options-grid { display: grid; gap: 12px; margin-bottom: 20px; }
+        
+        .option-btn {
+            background: #222; border: 1px solid #444; color: white;
+            padding: 15px; border-radius: 8px; cursor: pointer; text-align: left;
+            font-size: 1.1rem; transition: 0.3s;
+        }
+
+        .option-btn:hover:not(:disabled) { border-color: var(--gold); background: #2a2a2a; }
+        .option-btn.selected-correct { background: var(--success) !important; border-color: var(--success); }
+        .option-btn.selected-wrong { background: var(--error) !important; border-color: var(--error); }
+
+        .explanation-box {
+            display: none;
+            background: #0d0d0d;
+            border-left: 5px solid var(--gold);
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .bible-ref { color: var(--gold); font-weight: bold; display: block; margin-top: 10px; font-style: italic; }
+
+        #next-btn {
+            display: none; width: 100%; background: var(--gold); color: black;
+            border: none; padding: 15px; border-radius: 8px; font-weight: bold;
+            font-size: 1.1rem; cursor: pointer; margin-top: 20px;
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <h1>NEXAsoftsolution - እንወቅ (Enwok)</h1>
+        <p>ውጤት: <span id="score-display">0</span> | ጥያቄ: <span id="q-count">1</span>/50</p>
+    </div>
+
+    <div id="quiz-ui">
+        <span class="question-text" id="q-text">ጥያቄው እዚህ ይጫናል...</span>
+        <div class="options-grid" id="options-container"></div>
+
+        <div class="explanation-box" id="explanation-container">
+            <h3 id="result-status"></h3>
+            <p id="explanation-text"></p>
+            <span class="bible-ref" id="bible-verses"></span>
+        </div>
+
+        <button id="next-btn" onclick="nextQuestion()">ቀጣይ ጥያቄ</button>
+    </div>
+
+    <div id="final-screen" style="display:none; text-align:center;">
+        <h2 style="color:var(--gold);">ፈተናውን አጠናቀሃል!</h2>
+        <p id="final-result-text" style="font-size:1.5rem;"></p>
+        <button onclick="location.reload()" class="option-btn" style="text-align:center; width:220px; margin:20px auto; display:block;">እንደገና ጀምር</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        { q: "ለመላእክት የምንሰግደው ስግደት ምን ይባላል?", options: ["የጸጋ ስግደት", "የአምልኮ ስግደት", "የባሕርይ ስግደት", "የክብር ስግደት"], correct: 0, exp: "መጽሐፍ ቅዱስ ቅዱሳን መላእክትን ማክበርና መስገድ እንደሚገባ ይናገራል። ይህ ስግደት ግን የአምልኮ ሳይሆን የጸጋ ስግደት ነው።", bible: "ኢያሱ 5:14፣ ዘፍጥረት 18:2" },
+        { q: "ጌታችን ኢየሱስ ክርስቶስ ለአርአያነት ስንት ቀን ጾመ?", options: ["7 ቀን", "15 ቀን", "40 ቀን", "55 ቀን"], correct: 2, exp: "ጌታችን በገዳመ ቆሮንቶስ 40 ቀንና 40 ሌሊት በመጾም ለጾም መሠረት ጥሏል።", bible: "ማቴዎስ 4:2" },
+        { q: "ጥምቀት ለምን አንዴ ብቻ ይሆናል?", options: ["ሥርዓት ስለሆነ", "ዳግም ልደት ስለሆነ", "አንድ ጊዜ በቂ ነው", "ሁለተኛው ስለማይሰራ"], correct: 1, exp: "ሥጋዊ ልደት አንዴ እንደሚሆን ሁሉ ከመንፈስ ቅዱስ ዳግም መወለድም (ጥምቀት) አንዴ ብቻ ነው።", bible: "ኤፌሶን 4:5" },
+        { q: "ሥራ የሌለው እምነት ምን እንደሆነ መጽሐፍ ቅዱስ ይናገራል?", options: ["የሞተ", "ደካማ", "ምስጉን", "የማይጠቅም"], correct: 0, exp: "እምነት በተግባር ወይም በሥራ መገለጥ አለበት፤ አለበለዚያ የሞተ ነው።", bible: "ያዕቆብ 2:26" },
+        { q: "በቤተክርስቲያን ጫማ የሚወለቀው ለምንድነው?", options: ["ስፍራው ቅዱስ ስለሆነ", "ንጽሕና ለመጠበቅ", "ሕግ ስለሆነ", "ባህል ስለሆነ"], correct: 0, exp: "እግዚአብሔር ለሙሴና ለኢያሱ በቆሙበት ስፍራ ጫማቸውን እንዲያወልቁ አዟቸዋል። ቤተክርስቲያንም የፈጣሪ መቅደስ በመሆኗ ጫማ ይወለቃል።", bible: "ዘጸአት 3:5፣ ኢያሱ 5:15" },
+        { q: "ወደ ምስራቅ ዞሮ መጸለይ ለምን አስፈለገ?", options: ["ገነት በምስራቅ ስለሆነች", "ፀሐይ ከዛ ስለሚወጣ", "አቅጣጫው ስለሚያምር", "መልስ የለም"], correct: 0, exp: "እግዚአብሔር ገነትን በምስራቅ በኩል ተክሏታል፤ ደግሞም ጌታችን በዳግም ምጽዓት ከምስራቅ እንደሚመጣ ይጠበቃል።", bible: "ዘፍጥረት 2:8፣ ማቴዎስ 24:27" },
+        { q: "በቃና ዘገሊላ ውኃው ወደ ወይን የተለወጠው በማን አማላጅነት ነው?", options: ["በቅዱስ ጴጥሮስ", "በእመቤታችን ማርያም", "በመላእክት", "በሐዋርያት"], correct: 1, exp: "እመቤታችን 'ወይን የላቸውም' ስትል በጠየቀችው መሠረት ጌታችን የመጀመሪያውን ተአምር አድርጓል።", bible: "ዮሐንስ 2:1-11" },
+        { q: "የኢትዮጵያ ኦርቶዶክስ ተዋሕዶ ቤተክርስቲያን መጽሐፍ ቅዱስ ብዛት ስንት ነው?", options: ["66", "73", "81", "120"], correct: 2, exp: "ቤተክርስቲያናችን የቀድሞ አባቶች የተቀበሏቸውን ሁሉንም መጻሕፍት አካትታ 81 ታደርሳለች።", bible: "መዝገበ ሃይማኖት" },
+        { q: "ንሥሐ ለምን ለካህን ይነገራል?", options: ["ሥልጣነ ክህነት ስላላቸው", "ሰውን ስለሚፈሩ", "ባህል ስለሆነ", "ሁሉም መልስ ነው"], correct: 0, exp: "ጌታችን ለሐዋርያት 'ኃጢአታቸውን ይቅር ያላችኋቸው ይለቀቅላቸዋል' የሚል ሥልጣን ሰጥቷል።", bible: "ዮሐንስ 20:23" },
+        { q: "እውነተኛው የጌታ ሥጋና ደም ምንድነው?", options: ["ተምሳሌት", "ቁርባን", "ባረካ", "ዳቦና ጠጅ"], correct: 1, exp: "ቅዱስ ቁርባን በጸሎተ ቅዳሴ ወደ እውነተኛ የክርስቶስ ሥጋና ደም ይለወጣል።", bible: "ዮሐንስ 6:54፣ ማቴዎስ 26:26" },
+        { q: "የእግዚአብሔር ቃል ኪዳን ማደሪያ ምን ይባላል?", options: ["መስቀል", "ታቦት", "ስዕል", "መጋረጃ"], correct: 1, exp: "ታቦት እግዚአብሔር ከሰው ልጆች ጋር የገባው ቃል ኪዳን ምልክትና ክብሩ የሚገለጥበት ነው።", bible: "ዘጸአት 25:8፣ ራእይ 11:19" },
+        { q: "ሴቶች በጸሎት ጊዜ ራሳቸውን ለምን ይሸፍናሉ?", options: ["በትሕትና ስለሚጸልዩ", "ለክብርና ለመላእክት", "ባህል ስለሆነ", "መልስ የለም"], correct: 1, exp: "ሴቶች በጸሎት ጊዜ ስለ መላእክት የሥልጣን ምልክት በራሳቸው ላይ ሊኖራቸው ይገባል።", bible: "1ኛ ቆሮንቶስ 11:5-10" },
+        { q: "የመስቀል ትርጉም ለክርስቲያኖች ምንድነው?", options: ["የመከራ ምልክት", "የእግዚአብሔር ኃይል", "ጌጥ", "የሞት ምልክት"], correct: 1, exp: "የመስቀሉ ቃል ለሚጠፉት ሞኝነት ለእኛ ለምንድን ግን የእግዚአብሔር ኃይል ነው።", bible: "1ኛ ቆሮንቶስ 1:18" },
+        { q: "ሕፃናት በስንት ቀናቸው ይጠመቃሉ?", options: ["30 እና 60", "40 እና 80", "7 እና 14", "ሲያድጉ"], correct: 1, exp: "እንደ ኦርቶዶክሳዊት ቤተክርስቲያን ሥርዓት ወንድ በ40 ቀን ሴት በ80 ቀን ይጠመቃሉ።", bible: "ሌዋውያን 12:1-8" },
+        { q: "ዕጣን በቤተክርስቲያን ለምን ይታጠናል?", options: ["ሽታው ጥሩ ስለሆነ", "የጸሎት ምሳሌ ስለሆነ", "ለጌጥ", "አጋንንት ለማባረር ብቻ"], correct: 1, exp: "ዕጣን የቅዱሳን ጸሎት ወደ ፈጣሪ መዓዛ ሆኖ እንደሚቀርብ ምሳሌ ነው።", bible: "መዝሙር 141:2፣ ራእይ 8:3-4" },
+        { q: "መልአኩ ቅዱስ ገብርኤል ለእመቤታችን ምን ብሎ አበሰራት?", options: ["ሰላም ላንቺ ይሁን", "ደስ ይበልሽ ጸጋ የሞላብሽ", "አምላክ መርጦሻል", "መልካም ቀን"], correct: 1, exp: "መልአኩ ቅዱስ ገብርኤል የጌታን መወለድ ሲያበስራት 'ደስ ይበልሽ ጸጋ የሞላብሽ ሆይ ጌታ ካንቺ ጋር ነው' ብሏታል።", bible: "ሉቃስ 1:28" },
+        { q: "አምላክና ሰው በተዋሕዶ አንድ ሆኑ ማለት ምን ማለት ነው?", options: ["ተቀላቀሉ", "ተዋሕዶ", "ተለዋወጡ", "አልተገናኙም"], correct: 1, exp: "መለኮትና ትስብእት (ሰውነት) ያለ መቀላቀልና ያለ መለወጥ አንድ መሆናቸው ምስጢረ ተዋሕዶ ይባላል።", bible: "ዮሐንስ 1:14" },
+        { q: "የመጀመሪያው ሰው አዳም የተፈጠረው ከምንድነው?", options: ["ከውኃ", "ከእሳት", "ከመሬት አፈር", "ከአየር"], correct: 2, exp: "እግዚአብሔር አምላክ ሰውን ከምድር አፈር አበጅቶ የሕይወት እስትንፋስ እፍ አለበት።", bible: "ዘፍጥረት 2:7" },
+        { q: "ኖኅ መርከቡን የሠራው ከምን ዓይነት እንጨት ነው?", options: ["ከጥድ", "ከግራር", "ከጎፌር", "ከወይራ"], correct: 2, exp: "እግዚአብሔር ኖኅን ከጎፌር እንጨት መርከብ እንዲሠራ አዞታል።", bible: "ዘፍጥረት 6:14" },
+        { q: "እግዚአብሔር ለአብርሃም የሰጠው የቃል ኪዳን ምልክት ምንድነው?", options: ["ግዝረት", "ጥምቀት", "ቀስተ ደመና", "መስዋዕት"], correct: 0, exp: "ግዝረት በአብርሃምና በዘሩ መካከል የቃል ኪዳን ምልክት ነበረ።", bible: "ዘፍጥረት 17:11" },
+        { q: "ሙሴ የእግዚአብሔርን ሕግ የተቀበለበት ተራራ ማን ይባላል?", options: ["ደብረ ዘይት", "ሲና", "ታቦር", "ቀርሜሎስ"], correct: 1, exp: "ሙሴ በሲና ተራራ ላይ አሥርቱን ትእዛዛት ተቀብሏል።", bible: "ዘጸአት 19:20" },
+        { q: "ከሚከተሉት ውስጥ አንዱ መንፈስ ቅዱስ የወረደበት ቀን ነው?", options: ["በዓለ ሃምሳ", "ልደት", "ጥምቀት", "ትንሣኤ"], correct: 0, exp: "በበዓለ ሃምሳ ቀን መንፈስ ቅዱስ በሐዋርያት ላይ በእሳት ላንቃ አምሳል ወርዷል።", bible: "የሐዋርያት ሥራ 2:1-4" },
+        { q: "ቅዱስ ጳውሎስ ወደ ክርስትና ከመመለሱ በፊት ማን ይባል ነበር?", options: ["በርናባስ", "ሳውል", "ሲላስ", "ጢሞቴዎስ"], correct: 1, exp: "ሳውል ክርስቲያኖችን ያሳድድ የነበረ ሲሆን በደማስቆ መንገድ ጌታ ተገልጦለት ተመልሷል።", bible: "የሐዋርያት ሥራ 9:1" },
+        { q: "የመጀመሪያው ሰማዕት ማን ይባላል?", options: ["ቅዱስ ጊዮርጊስ", "ቅዱስ እስጢፋኖስ", "ቅዱስ ጴጥሮስ", "ቅዱስ ያዕቆብ"], correct: 1, exp: "ቅዱስ እስጢፋኖስ ስለ ክርስቶስ ምስክርነት በመጀመሪያ በድንጋይ ተወግሮ ሞቷል።", bible: "የሐዋርያት ሥራ 7:59" },
+        { q: "ዮናስ በአሳ ነባሪ ሆድ ውስጥ ስንት ቀን ቆየ?", options: ["1 ቀን", "3 ቀን", "7 ቀን", "40 ቀን"], correct: 1, exp: "ዮናስ በአሳ ነባሪ ሆድ ውስጥ ሦስት ቀንና ሦስት ሌሊት ቆይቷል፤ ይህም የጌታ ትንሣኤ ምሳሌ ነው።", bible: "ዮናስ 1:17" },
+        { q: "በመጽሐፍ ቅዱስ ረጅም ዕድሜ የኖረው ሰው ማን ነው?", options: ["አዳም", "ማቱሳላ", "ሄኖክ", "ኖኅ"], correct: 1, exp: "ማቱሳላ 969 ዓመታት በመኖር በመጽሐፍ ቅዱስ ረጅሙን ዕድሜ ያስመዘገበ ሰው ነው።", bible: "ዘፍጥረት 5:27" },
+        { q: "ዳዊት ጎልያድን የገደለው በምን ነበር?", options: ["በሰይፍ", "በጦር", "በወንጭፍና በድንጋይ", "በቀስት"], correct: 2, exp: "ታናሹ ዳዊት ግዙፉን ፍልስጤማዊ ጎልያድን በወንጭፍና በድንጋይ ጥሎታል።", bible: "1ኛ ሳሙኤል 17:50" },
+        { q: "ሰሎሞን ለእግዚአብሔር መቅደስ የሠራው የት ነው?", options: ["በቤተልሔም", "በናዝሬት", "በኢየሩሳሌም", "በግብፅ"], correct: 2, exp: "ንጉሥ ሰሎሞን በኢየሩሳሌም እጅግ የሚያምር የእግዚአብሔርን መቅደስ ሠርቷል።", bible: "1ኛ ነገሥት 6:1" },
+        { q: "ጌታችን የተወለደው የት ነው?", options: ["በኢየሩሳሌም", "በቤተልሔም", "በናዝሬት", "በቃና"], correct: 1, exp: "ጌታችን መድኃኒታችን ኢየሱስ ክርስቶስ በይሁዳ ቤተልሔም በግርግም ተወለደ።", bible: "ማቴዎስ 2:1" },
+        { q: "የጌታችን የመጠመቂያ ቦታ ማን ይባላል?", options: ["አባይ", "ዮርዳኖስ", "ግዮን", "ኤፍራጥስ"], correct: 1, exp: "ጌታችን በዮሐንስ እጅ በዮርዳኖስ ወንዝ ተጠምቋል።", bible: "ማቴዎስ 3:13" },
+        { q: "ጌታችን አልዓዛርን ከሞት ያስነሳው ስንት ቀን ከሆነው በኋላ ነው?", options: ["በ1 ቀን", "በ2 ቀን", "በ3 ቀን", "በ4 ቀን"], correct: 3, exp: "አልዓዛር በሞተ በአራተኛው ቀን ጌታችን ከመቃብር አስነስቶታል።", bible: "ዮሐንስ 11:39" },
+        { q: "ቅዱስ ጴጥሮስ ጌታን አላውቀውም ብሎ ስንት ጊዜ ካደ?", options: ["1 ጊዜ", "2 ጊዜ", "3 ጊዜ", "7 ጊዜ"], correct: 2, exp: "ዶሮ ሳይጮህ ሦስት ጊዜ ትክደኛለህ እንዳለው ሦስት ጊዜ ካደ።", bible: "ማቴዎስ 26:75" },
+        { q: "ጌታችን የተሰቀለበት ቦታ ማን ይባላል?", options: ["ደብረ ዘይት", "ጎልጎታ", "ሲና", "ቀርሜሎስ"], correct: 1, exp: "ጌታችን በቀራንዮ ወይም በጎልጎታ (የራስ ቅል ስፍራ) ተሰቅሏል።", bible: "ማቴዎስ 27:33" },
+        { q: "ጌታችን ከሙታን ተለይቶ የተነሳው በስንተኛው ቀን ነው?", options: ["በ2ኛው ቀን", "በ3ኛው ቀን", "በ40ኛው ቀን", "በ50ኛው ቀን"], correct: 1, exp: "ጌታችን በሦስተኛው ቀን በታላቅ ኃይልና ሥልጣን ተነስቷል።", bible: "ማቴዎስ 28" },
+        { q: "ጌታችን ወደ ሰማይ ያረገው ከተነሳ ከስንት ቀን በኋላ ነው?", options: ["ከ3 ቀን", "ከ7 ቀን", "ከ40 ቀን", "ከ50 ቀን"], correct: 2, exp: "ጌታችን ለአርባ ቀናት ለሐዋርያት እየታያቸው ከቆየ በኋላ በ40ኛው ቀን አርጓል።", bible: "የሐዋርያት ሥራ 1:3" },
+        { q: "ጥበብን ከፈጣሪ የተሰጠው ንጉሥ ማን ነው?", options: ["ዳዊት", "ሰሎሞን", "ሕዝቅያስ", "ኢዮስያስ"], correct: 1, exp: "ሰሎሞን ከሀብት ይልቅ ጥበብን በመጠየቁ እግዚአብሔር ጥበብን ሰጥቶታል።", bible: "1ኛ ነገሥት 3:12" },
+        { q: "ሳምሶን ኃይሉ የነበረው የት ነው?", options: ["በእጁ", "በልቡ", "በፀጉሩ", "በሰይፉ"], correct: 2, exp: "የሳምሶን ናዝራዊነትና ኃይል ምልክት በፀጉሩ ላይ ነበረ።", bible: "መጻሕፍተ መሳፍንት 16:17" },
+        { q: "በእሳት ሰረገላ ወደ ሰማይ የወጣው ነቢይ ማን ነው?", options: ["ሙሴ", "ኤልያስ", "ኤልሳዕ", "ኢሳይያስ"], correct: 1, exp: "ነቢዩ ኤልያስ በእሳት ሰረገላ ወደ ሰማይ ተነጥቋል።", bible: "2ኛ ነገሥት 2:11" },
+        { q: "አሥርቱ ትእዛዛት የተጻፉት በምን ላይ ነበር?", options: ["በቆዳ", "በወረቀት", "በሁለት የድንጋይ ጽላቶች", "በእንጨት"], correct: 2, exp: "እግዚአብሔር በደብረ ሲና አሥርቱን ትእዛዛት በሁለት የድንጋይ ጽላቶች ላይ ጽፎ ሰጥቷል።", bible: "ዘጸአት 31:18" },
+        { q: "ጌታችን በባሕር ላይ ሲራመድ ሊከተለው የሞከረ ሐዋርያ ማን ነው?", options: ["ዮሐንስ", "ጴጥሮስ", "ያዕቆብ", "እንድርያስ"], correct: 1, exp: "ጴጥሮስ በባሕር ላይ ተራምዶ ወደ ጌታ ሊሄድ ሞክሮ ነበር።", bible: "ማቴዎስ 14:29" },
+        { q: "ጌታችን አምስት እንጀራና ሁለት ዓሳ አባርክ ስንት ሰዎችን መገበ?", options: ["1000", "3000", "5000", "10000"], correct: 2, exp: "ጌታችን ከሴቶችና ከሕፃናት ውጭ አምስት ሺህ ሰዎችን መግቧል።", bible: "ማቴዎስ 14:21" },
+        { q: "ከጌታችን 12 ሐዋርያት መካከል የካደውና አሳልፎ የሰጠው ማን ነው?", options: ["ቶማስ", "ፊልጶስ", "ይሁዳ አስቆሮቱ", "ማቴዎስ"], correct: 2, exp: "ይሁዳ በ30 ብር ጌታን አሳልፎ ሰጥቷል።", bible: "ማቴዎስ 26:14-16" },
+        { q: "የመጀመሪያው የቤተክርስቲያን ዲያቆን ማን ይባላል?", options: ["ፊልጶስ", "እስጢፋኖስ", "ኒቆላዎስ", "ጢሞን"], correct: 1, exp: "ከተመረጡት ሰባቱ ዲያቆናት መካከል ቅዱስ እስጢፋኖስ አንዱና ዋነኛው ነበረ።", bible: "የሐዋርያት ሥራ 6:5" },
+        { q: "በመከራው ጊዜ እግዚአብሔርን ያልካደ ታጋሽ ሰው ማን ነው?", options: ["አብርሃም", "ኢዮብ", "ሎጥ", "ይስሐቅ"], correct: 1, exp: "ኢዮብ ንብረቱንና ልጆቹን ቢያጣም 'እግዚአብሔር ሰጠ እግዚአብሔር ነሳ' ብሎ ፈጣሪውን አመስግኗል።", bible: "መጽሐፈ ኢዮብ 1:21" },
+        { q: "እግዚአብሔር ዓለምን በስንት ቀናት ፈጠረ?", options: ["1 ቀን", "3 ቀን", "6 ቀን", "7 ቀን"], correct: 2, exp: "እግዚአብሔር ፍጥረታትን በስድስት ቀናት ፈጥሮ በሰባተኛው ቀን አረፈ።", bible: "ዘፍጥረት 1" },
+        { q: "የመጀመሪያዋ ሴት ሔዋን የተፈጠረችው ከምንድነው?", options: ["ከመሬት አፈር", "ከአዳም ጎን", "ከእሳት", "ከአየር"], correct: 1, exp: "እግዚአብሔር ከአዳም ጎን አንዲት አጥንት ወስዶ ሔዋንን ፈጠራት።", bible: "ዘፍጥረት 2:22" },
+        { q: "ቃየል ወንድሙን አቤልን የገደለው ለምንድነው?", options: ["በቅናት", "በስህተት", "በጨዋታ", "በጦርነት"], correct: 0, exp: "ቃየል የእግዚአብሔርን የአቤልን መስዋዕት መቀበል አይቶ በመቅናቱ ወንድሙን ገድሏል።", bible: "ዘፍጥረት 4:5-8" },
+        { q: "የሰው ልጆች ቋንቋ የተደበላለቀው የት ነው?", options: ["በግብፅ", "በባቢሎን ግንብ", "በኢየሩሳሌም", "በሰዶም"], correct: 1, exp: "ሰዎች ሰማይ የሚደርስ ግንብ ለመሥራት በሞከሩ ጊዜ እግዚአብሔር ቋንቋቸውን ደበላለቀው።", bible: "ዘፍጥረት 11:7-9" },
+        { q: "እመቤታችን ቅድስት ማርያም ያረፈችው በስንት ዓመቷ ነው?", options: ["33", "49", "64", "80"], correct: 2, exp: "እመቤታችን በዚህ ዓለም 64 ዓመታት ከቆየች በኋላ አርፋለች።", bible: "የቤተክርስቲያን ታሪክ" },
+        { q: "መጽሐፍ ቅዱስን መመርመር ለምን ያስፈልጋል?", options: ["ለእውቀት", "የዘላለም ሕይወት ስላለው", "ለክርክር", "ሁሉም መልስ ነው"], correct: 1, exp: "ጌታችን 'እናንተ በመጻሕፍት የዘላለም ሕይወት እንዳላችሁ ይመስላችኋልና እነርሱን መርምሩ' ብሏል።", bible: "ዮሐንስ 5:39" }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        const q = quizData[currentQuestion];
+        document.getElementById('q-text').innerText = q.q;
+        document.getElementById('q-count').innerText = currentQuestion + 1;
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        document.getElementById('explanation-container').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+
+        q.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.className = 'option-btn';
+            btn.onclick = () => checkAnswer(index, q.correct);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, correct) {
+        const q = quizData[currentQuestion];
+        const buttons = document.querySelectorAll('.option-btn');
+        const statusHeader = document.getElementById('result-status');
+        
+        buttons.forEach(btn => btn.disabled = true);
+
+        if(selected === correct) {
+            buttons[selected].classList.add('selected-correct');
+            statusHeader.innerText = "✅ ትክክል ነህ!";
+            statusHeader.style.color = "var(--success)";
+            score++;
+        } else {
+            buttons[selected].classList.add('selected-wrong');
+            buttons[correct].classList.add('selected-correct');
+            statusHeader.innerText = "❌ ተሳስተሃል!";
+            statusHeader.style.color = "var(--error)";
+        }
+
+        document.getElementById('explanation-text').innerText = q.exp;
+        document.getElementById('bible-verses').innerText = "📖 ማስረጃ፡ " + q.bible;
+        document.getElementById('explanation-container').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+        document.getElementById('score-display').innerText = score;
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        if(currentQuestion < quizData.length) {
+            loadQuestion();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        } else {
+            showFinalResult();
+        }
+    }
+
+    function showFinalResult() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('final-screen').style.display = 'block';
+        document.getElementById('final-result-text').innerText = `ጠቅላላ ውጤትህ፡ ${score} ከ ${quizData.length}`;
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
